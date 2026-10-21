@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Samanvay (समनवय) – The Garden of Harmony</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family:'Plus Jakarta Sans',sans-serif; background:radial-gradient(circle at 50% 20%,#f7fbf8 0%,#edf5f0 60%,#e1ede5 100%); min-height:100vh; color:#2d3748; }
+    .cinzel { font-family:'Cinzel',serif; }
+    .glass { background:rgba(255,255,255,0.88); backdrop-filter:blur(10px); border:1px solid #dcece1; box-shadow:0 10px 25px rgba(45,75,55,0.05); }
+  </style>
+</head>
+<body class="p-3 md:p-6 flex flex-col items-center">
+  <header class="text-center max-w-md my-3">
+    <div class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold inline-block mb-1">A Heartfulness Mindful Sanctuary</div>
+    <h1 class="text-2xl md:text-3xl font-bold text-stone-800">समनवय <span class="text-emerald-700 font-light">| Samanvay</span></h1>
+    <p class="text-xs text-stone-600 mt-1">Roll gently, breathe deep, and nurture inner healing.</p>
+    <div class="flex justify-center gap-2 mt-2 text-xs">
+      <button onclick="toggleAudio()" id="audBtn" class="px-3 py-1 rounded-full border border-stone-300 bg-white text-stone-700">🌱 Ambient: Off</button>
+      <button onclick="resetGame()" class="px-3 py-1 rounded-full border border-stone-200 bg-stone-100 text-stone-600">Reset</button>
+    </div>
+  </header>
+
+  <main class="w-full max-w-3xl glass rounded-3xl p-4 mb-4">
+    <div class="flex justify-between text-xs text-stone-600 mb-2 font-medium">
+      <span id="locLabel" class="text-emerald-800">📍 Sanctuary: Aarambh</span>
+      <span id="stepLabel" class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">Step 1/24</span>
+    </div>
+    <div class="rounded-2xl border border-stone-200 overflow-hidden bg-[#fbfdfb] shadow-inner">
+      <canvas id="boardCanvas" width="900" height="480" class="w-full h-auto block"></canvas>
+    </div>
+    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-stone-50 rounded-2xl border border-stone-200">
+      <div id="subText" class="text-xs text-stone-600 italic text-center sm:text-left">"Every step in awareness brings you back to your sacred center."</div>
+      <div class="flex items-center gap-3">
+        <div id="dice" class="w-10 h-10 rounded-xl bg-white border border-stone-300 flex items-center justify-center font-bold text-emerald-700 text-lg shadow-sm">🌱</div>
+        <button id="btnRoll" onclick="rollSteps()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-md transition">Roll (1–4)</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modals Container -->
+  <div id="modalBox" class="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass max-w-sm w-full rounded-3xl p-6 text-center">
+      <div id="mIcon" class="text-3xl mb-1">🌸</div>
+      <h3 id="mTitle" class="cinzel text-lg font-bold text-stone-800 mb-1">Sanctuary</h3>
+      <div id="mBody" class="text-xs text-stone-700 bg-emerald-50/80 p-3 rounded-xl border border-emerald-100 mb-3 leading-relaxed text-left"></div>
+      
+      <!-- 60s Live Nirmalta Cleaning Canvas Inside Modal -->
+      <div id="cleanseArea" class="hidden mb-3">
+        <div class="relative w-full h-24 rounded-xl border border-stone-200 bg-white overflow-hidden flex items-center justify-center mb-2 shadow-inner">
+          <canvas id="cCanvas" width="340" height="96" class="absolute inset-0 w-full h-full"></canvas>
+          <div id="cBadge" class="relative z-10 px-2.5 py-0.5 rounded-full bg-white/85 border text-[10px] font-medium text-stone-700">Phase 1: Release</div>
+        </div>
+        <div class="w-full bg-stone-200 h-1.5 rounded-full overflow-hidden mb-1.5">
+          <div id="cBar" class="bg-emerald-500 h-full w-0 transition-all duration-300"></div>
+        </div>
+        <div class="flex justify-between text-[10px] text-stone-500 px-1">
+          <span id="cLabel">Releasing subtle vapor...</span>
+          <span id="cTimer" class="font-mono font-bold text-emerald-800">60s</span>
+        </div>
+      </div>
+
+      <button id="mBtn" onclick="closeM()" class="w-full py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow transition">Accept & Continue</button>
+    </div>
+  </div>
+
+  <script>
+    let aCtx=null, drone=null, isDrone=false;
+    function getAC(){ if(!aCtx) aCtx=new (window.AudioContext||window.webkitAudioContext)(); return aCtx; }
+    function chime(f=432,t=1.5){
+      try{ const c=getAC(), o=c.createOscillator(), g=c.createGain(); o.type='sine'; o.frequency.setValueAtTime(f,c.currentTime);
+      g.gain.setValueAtTime(0.25,c.currentTime); g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+t);
+      o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+t); }catch(e){}
+    }
+    function toggleAudio(){
+      const c=getAC();
+      if(!isDrone){
+        drone=c.createOscillator(); const g=c.createGain(); drone.type='sine'; drone.frequency.setValueAtTime(108,c.currentTime);
+        g.gain.setValueAtTime(0.03,c.currentTime); drone.connect(g); g.connect(c.destination); drone.start();
+        isDrone=true; document.getElementById('audBtn').innerText='🌱 Ambient: On';
+      } else { if(drone) drone.stop(); isDrone=false; document.getElementById('audBtn').innerText='🌱 Ambient: Off'; }
+    }
+
+    const data=[
+      {id:1,t:'Aarambh (Start)',d:'Step gently into recovery.',type:'n'},
+      {id:2,t:'Thodi Saans',d:'Take 3 deep breaths.',type:'b',txt:'Inhale peace for 4s, hold for 2s, exhale all tension for 4s.'},
+      {id:3,t:'Prakriti (Roots)',d:'Feel the calm stability of Earth.',type:'n'},
+      {id:4,t:'Apne Saath (Truth)',d:'Reflect upon inner purity.',type:'m',txt:'You loved purely and honestly. Another person’s choice reflects their soul, never your worth.'},
+      {id:5,t:'Nirmalta (Cleaning)',d:'60s interactive heart cleaning.',type:'c',txt:'Gently visualize heavy thoughts and hurt leaving your back as light vapor into the sky.'},
+      {id:6,t:'Shukriya',d:'Gratitude for one gentle moment.',type:'m',txt:'Give thanks for your enduring heart, courage, and resilience.'},
+      {id:7,t:'Sahajta',d:'Simplicity returns when we let go.',type:'n'},
+      {id:8,t:'Thodi Saans',d:'Expand stillness in the chest.',type:'b',txt:'Deep breath in. Feel sacred light entering every cell.'},
+      {id:9,t:'Apne Saath (Forgiving)',d:'Release self-blame.',type:'m',txt:'Forgive yourself for trusting deeply. To trust is noble and human; betrayal belongs to the one who faltered.'},
+      {id:10,t:'Prakriti (Flow)',d:'Flow effortlessly like a river.',type:'n'},
+      {id:11,t:'Nirmalta (Deep Cleaning)',d:'60s real-time purification.',type:'c',txt:'Let all hurtful words and complexity dissolve into subtle smoke from the back.'},
+      {id:12,t:'Vishram',d:'There is nowhere you need to rush.',type:'n'},
+      {id:13,t:'Shukriya',d:'Honor your brave heart.',type:'m',txt:'Even through deep sorrow, you choose kindness and truth.'},
+      {id:14,t:'Apne Saath (Renewal)',d:'New growth emerges.',type:'m',txt:'A pruned branch allows fresh blossoms to face the sun. You are rejuvenating day by day.'},
+      {id:15,t:'Thodi Saans',d:'Cool breeze clearing fatigue.',type:'b',txt:'Slow exhale (4s)... Release heaviness from your feet and eyes.'},
+      {id:16,t:'Prakriti (The Sky)',d:'The sky remains untouched by storms.',type:'n'},
+      {id:17,t:'Nirmalta (Release)',d:'60s emotional cleansing.',type:'c',txt:'Freeing others from resentment is the ultimate gift of peace to yourself.'},
+      {id:18,t:'Ananda',d:'Touch the quiet joy within.',type:'n'},
+      {id:19,t:'Shukriya',d:'Celebrate your creative spirit.',type:'m',txt:'Give thanks for your insight, creativity, and inner strength.'},
+      {id:20,t:'Apne Saath (Radiance)',d:'Your light was never borrowed.',type:'m',txt:'The warmth you gave was your own inner light. No one can ever take that away.'},
+      {id:21,t:'Thodi Saans',d:'Three breaths for restoration.',type:'b',txt:'Inhale calm, exhale sorrow. Rest peacefully in this moment.'},
+      {id:22,t:'Prakriti (Dawn)',d:'Night can never stop the dawn.',type:'n'},
+      {id:23,t:'Nirmalta (Purity)',d:'60s final cleansing.',type:'c',txt:'Step forward with a crystal-clean, light-filled heart.'},
+      {id:24,t:'Shanti (Inner Peace)',d:'You have arrived home within.',type:'s',txt:'You walked through reflection, release, and calm. You are radiant, whole, and free.'}
+    ];
+
+    let cur=1, rolling=false;
+    const cvs=document.getElementById('boardCanvas'), ctx=cvs.getContext('2d');
+
+    function getCoords(i){
+      const r=Math.floor(i/6), cInR=i%6, c=(r%2===0)?cInR:(5-cInR);
+      const px=85, py=65, sx=(cvs.width-px*2)/5, sy=(cvs.height-py*2)/3;
+      return { x: px+c*sx, y: cvs.height-(py+r*sy) };
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,cvs.width,cvs.height);
+      ctx.beginPath();
+      for(let i=0;i<24;i++){ const p=getCoords(i); if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); }
+      ctx.strokeStyle='#cde3d4'; ctx.lineWidth=14; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
+      ctx.strokeStyle='#ffffff'; ctx.lineWidth=6; ctx.stroke();
+
+      for(let i=0;i<24;i++){
+        const p=getCoords(i), isCur=(cur===i+1), item=data[i];
+        ctx.beginPath(); ctx.arc(p.x,p.y,16,0,Math.PI*2);
+        ctx.fillStyle=(item.type==='c')?'#e0e7ff':(item.type==='b'?'#bbf7d0':(item.type==='s'?'#a7f3d0':(item.type==='m'?'#fef08a':'#ffffff')));
+        ctx.fill(); ctx.lineWidth=isCur?3:1.5; ctx.strokeStyle=isCur?'#059669':'#94a3b8'; ctx.stroke();
+        ctx.fillStyle='#1e293b'; ctx.font='bold 10px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(i+1, p.x, p.y);
+      }
+      const cp=getCoords(cur-1);
+      ctx.beginPath(); ctx.arc(cp.x, cp.y-4, 10, 0, Math.PI*2);
+      ctx.fillStyle='#047857'; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke();
+    }
+
+    function rollSteps(){
+      if(rolling) return; rolling=true; chime(300, 0.2);
+      let r=Math.floor(Math.random()*4)+1;
+      if(cur+r>24) r=24-cur; if(r===0) r=1;
+      let cnt=0;
+      const t=setInterval(()=>{
+        document.getElementById('dice').innerText=['🌱','🌸','🍃','🕊️'][cnt%4]; cnt++;
+        if(cnt>5){ clearInterval(t); document.getElementById('dice').innerText=r; stepForward(r); }
+      },80);
+    }
+
+    function stepForward(rem){
+      if(rem<=0){ rolling=false; checkTile(); return; }
+      cur++; chime(420+cur*12, 0.2); updateUI();
+      setTimeout(()=>stepForward(rem-1), 220);
+    }
+
+    function updateUI(){
+      const itm=data[cur-1];
+      document.getElementById('locLabel').innerText=`📍 Sanctuary: ${itm.t}`;
+      document.getElementById('stepLabel').innerText=`Step ${cur}/24`;
+      document.getElementById('subText').innerText=`"${itm.d}"`;
+      draw();
+    }
+
+    let cInt=null, cSec=60, cAnim=null, cParts=[];
+    function checkTile(){
+      const itm=data[cur-1];
+      if(itm.type==='n') return;
+      document.getElementById('mTitle').innerText=itm.t;
+      document.getElementById('mBody').innerText=itm.txt;
+      document.getElementById('cleanseArea').classList.add('hidden');
+      document.getElementById('modalBox').classList.remove('hidden');
+
+      if(itm.type==='c'){
+        document.getElementById('cleanseArea').classList.remove('hidden');
+        startCleanse();
+      } else if(itm.type==='s') chime(528, 2.5);
+      else chime(432, 1.5);
+    }
+
+    function startCleanse(){
+      cSec=60; cParts=[];
+      const cv=document.getElementById('cCanvas'), cx=cv.getContext('2d');
+      for(let i=0;i<20;i++) cParts.push({ x:cv.width/2+(Math.random()*20-10), y:cv.height/2+(Math.random()*16-8), vx:(Math.random()*-1.5)-0.4, vy:(Math.random()-0.5)*0.6, s:Math.random()*5+2, a:Math.random()*0.5+0.3 });
+      
+      function render(){
+        cx.clearRect(0,0,cv.width,cv.height);
+        if(cSec>25){
+          cParts.forEach(p=>{ cx.beginPath(); cx.arc(p.x,p.y,p.s,0,Math.PI*2); cx.fillStyle=`rgba(148,163,184,${p.a})`; cx.fill(); p.x+=p.vx; p.y+=p.vy; p.a-=0.003; if(p.x<10||p.a<=0){ p.x=cv.width/2+(Math.random()*15-7); p.y=cv.height/2+(Math.random()*10-5); p.a=Math.random()*0.4+0.3; } });
+        } else {
+          const g=cx.createRadialGradient(cv.width/2,cv.height/2,4,cv.width/2,cv.height/2,40);
+          g.addColorStop(0,cSec>10?'rgba(251,191,36,0.45)':'rgba(16,185,129,0.4)'); g.addColorStop(1,'rgba(255,255,255,0)');
+          cx.fillStyle=g; cx.beginPath(); cx.arc(cv.width/2,cv.height/2,40,0,Math.PI*2); cx.fill();
+        }
+        cAnim=requestAnimationFrame(render);
+      }
+      if(cAnim) cancelAnimationFrame(cAnim);
+      render(); chime(396, 1.5);
+      if(cInt) clearInterval(cInt);
+      cInt=setInterval(()=>{
+        cSec--;
+        document.getElementById('cTimer').innerText=`${cSec}s`;
+        document.getElementById('cBar').style.width=`${((60-cSec)/60)*100}%`;
+        if(cSec>25){ document.getElementById('cBadge').innerText='Phase 1: Release (Leaving from back)'; document.getElementById('cLabel').innerText='Dissolving impressions...'; }
+        else if(cSec>10){ if(cSec===25) chime(528, 2); document.getElementById('cBadge').innerText='Phase 2: Sacred Vacuum (Divine Light)'; document.getElementById('cLabel').innerText='Light entering from front...'; }
+        else { document.getElementById('cBadge').innerText='Phase 3: Stillness & Purity'; document.getElementById('cLabel').innerText='Heart is light and settled.'; }
+        if(cSec<=0){ clearInterval(cInt); cancelAnimationFrame(cAnim); chime(528, 2.5); }
+      },1000);
+    }
+
+    function closeM(){
+      if(cInt) clearInterval(cInt);
+      if(cAnim) cancelAnimationFrame(cAnim);
+      document.getElementById('modalBox').classList.add('hidden');
+    }
+    function resetGame(){ cur=1; updateUI(); chime(432, 1.5); }
+    window.addEventListener('load', ()=>{ draw(); updateUI(); });
+  </script>
+</body>
+  </html>
+
