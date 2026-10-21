@@ -287,6 +287,145 @@
         triggerSanctuary(currentStep); return;
       }
       currentStep++; playChime(400 + currentStep * 15); updateStatusDisplay(); drawBoard();
+      setTimeout(() => { a
+  <script>
+    let audioCtx = null, droneOsc1 = null, droneOsc2 = null, droneGain = null, isDroneActive = false;
+    function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    function playSingingBowlTone(freq = 432) {
+      try {
+        initAudio(); const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3.5);
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 3.6);
+      } catch (e) {}
+    }
+    function playChime(freq = 528) {
+      try {
+        initAudio(); const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.8);
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 1.9);
+      } catch (e) {}
+    }
+    function toggleDrone() {
+      initAudio();
+      if (!isDroneActive) {
+        droneOsc1 = audioCtx.createOscillator(); droneOsc2 = audioCtx.createOscillator(); droneGain = audioCtx.createGain();
+        droneOsc1.type = 'sine'; droneOsc1.frequency.setValueAtTime(108, audioCtx.currentTime);
+        droneOsc2.type = 'sine'; droneOsc2.frequency.setValueAtTime(216, audioCtx.currentTime);
+        droneGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        droneOsc1.connect(droneGain); droneOsc2.connect(droneGain); droneGain.connect(audioCtx.destination);
+        droneOsc1.start(); droneOsc2.start(); isDroneActive = true;
+        document.getElementById('droneLabel').innerText = 'Ambient Calm: Active';
+        document.getElementById('audioToggle').classList.add('bg-emerald-100', 'border-emerald-300');
+      } else {
+        if (droneGain) {
+          droneGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1);
+          setTimeout(() => { if (droneOsc1) droneOsc1.stop(); if (droneOsc2) droneOsc2.stop(); }, 1000);
+        }
+        isDroneActive = false; document.getElementById('droneLabel').innerText = 'Ambient Calm: Off';
+        document.getElementById('audioToggle').classList.remove('bg-emerald-100', 'border-emerald-300');
+      }
+    }
+
+    const sanctuaries = [
+      { id: 1, title: 'Aarambh (Gentle Beginning)', type: 'normal', desc: 'Step gently. You are entering a sacred space of recovery.' },
+      { id: 2, title: 'Thodi Saans (Deep Breath)', type: 'breath', desc: 'Pause and take a deep, healing breath.' },
+      { id: 3, title: 'Prakriti (Anchoring Roots)', type: 'nature', desc: 'Feel the stability of the Earth beneath you.' },
+      { id: 4, title: 'Apne Saath (Truth Within)', type: 'reflect', text: 'You gave genuine love with an honest heart. How others chose to respond reflects their soul, not your worth.' },
+      { id: 5, title: 'Nirmalta (Cleaning)', type: 'cleanse', desc: 'Gently release heavy vibrations from your back.' },
+      { id: 6, title: 'Shukriya (Gratitude)', type: 'gratitude', desc: 'Recall one gentle blessing from today.' },
+      { id: 7, title: 'Sahajta (Simplicity)', type: 'normal', desc: 'Life returns to simplicity when we let go of overthinking.' },
+      { id: 8, title: 'Thodi Saans (Expansion)', type: 'breath', desc: 'Breathe into your chest, creating space for calmness.' },
+      { id: 9, title: 'Apne Saath (Forgiving Self)', type: 'reflect', text: 'Forgive yourself for trusting deeply. To trust is human and noble; betrayal is the flaw of the one who broke faith.' },
+      { id: 10, title: 'Prakriti (Flowing River)', type: 'nature', desc: 'Like a clean mountain river, flow around stone obstacles without fighting them.' },
+      { id: 11, title: 'Nirmalta (Deep Cleaning)', type: 'cleanse', desc: 'Let go of past hurtful words like dark vapor disappearing into open sky.' },
+      { id: 12, title: 'Vishram (Still Waters)', type: 'normal', desc: 'Rest your mind. There is nowhere you need to hurry to.' },
+      { id: 13, title: 'Shukriya (Kindness)', type: 'gratitude', desc: 'Give thanks for your own courageous and tender heart.' },
+      { id: 14, title: 'Apne Saath (Resilience)', type: 'reflect', text: 'A broken branch allows a tree to grow new shoots towards the light. You are rejuvenating, day by day.' },
+      { id: 15, title: 'Thodi Saans (Cool Breeze)', type: 'breath', desc: 'Inhale clarity, exhale tension from your neck and feet.' },
+      { id: 16, title: 'Prakriti (The Open Sky)', type: 'nature', desc: 'The sky witnesses every storm, yet its blue expanse never gets stained.' },
+      { id: 17, title: 'Nirmalta (Release of Grudge)', type: 'cleanse', desc: 'Freeing others from resentment is the ultimate gift of freedom to yourself.' },
+      { id: 18, title: 'Ananda (Subtle Joy)', type: 'normal', desc: 'Touch the stillness at the center of your chest.' },
+      { id: 19, title: 'Shukriya (Silent Grace)', type: 'gratitude', desc: 'Name one creative thought or skill that brings you joy.' },
+      { id: 20, title: 'Apne Saath (The Rising Star)', type: 'reflect', text: 'The light you brought to others was never borrowed—it was always your own inner radiance. It is still here.' },
+      { id: 21, title: 'Thodi Saans (Wholeness)', type: 'breath', desc: 'Three peaceful breaths to anchor peace in every cell.' },
+      { id: 22, title: 'Prakriti (Dawn of Hope)', type: 'nature', desc: 'Night has no power to prevent the arrival of dawn.' },
+      { id: 23, title: 'Nirmalta (Purity of Heart)', type: 'cleanse', desc: 'Step forward into clean, light-filled awareness.' },
+      { id: 24, title: 'Shanti (Sanctuary of Peace)', type: 'shanti', desc: 'You have returned to your sacred sanctuary within.' }
+    ];
+
+    let currentStep = 1, isMoving = false;
+    const canvas = document.getElementById('boardCanvas'), ctx = canvas.getContext('2d');
+
+    function getTileCoords(index) {
+      const row = Math.floor(index / 6), colInRow = index % 6, col = (row % 2 === 0) ? colInRow : (5 - colInRow);
+      const paddingX = 90, paddingY = 70, spacingX = (canvas.width - paddingX * 2) / 5, spacingY = (canvas.height - paddingY * 2) / 3;
+      return { x: paddingX + col * spacingX, y: canvas.height - (paddingY + row * spacingY) };
+    }
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      for (let i = 0; i < 24; i++) {
+        const pt = getTileCoords(i);
+        if (i === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+      }
+      ctx.strokeStyle = '#cde3d4'; ctx.lineWidth = 14; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 6; ctx.stroke();
+
+      for (let i = 0; i < 24; i++) {
+        const pt = getTileCoords(i), item = sanctuaries[i], isCurrent = (currentStep === i + 1);
+        if (isCurrent) {
+          ctx.beginPath(); ctx.arc(pt.x, pt.y, 24, 0, Math.PI * 2); ctx.fillStyle = 'rgba(16, 185, 129, 0.2)'; ctx.fill();
+        }
+        ctx.beginPath(); ctx.arc(pt.x, pt.y, 16, 0, Math.PI * 2);
+        if (item.type === 'breath') ctx.fillStyle = '#bbf7d0';
+        else if (item.type === 'cleanse') ctx.fillStyle = '#e0e7ff';
+        else if (item.type === 'reflect') ctx.fillStyle = '#fef08a';
+        else if (item.type === 'gratitude') ctx.fillStyle = '#fbcfe8';
+        else if (item.type === 'nature') ctx.fillStyle = '#fed7aa';
+        else if (item.type === 'shanti') ctx.fillStyle = '#a7f3d0';
+        else ctx.fillStyle = '#ffffff';
+        ctx.fill(); ctx.lineWidth = isCurrent ? 3 : 1.5; ctx.strokeStyle = isCurrent ? '#059669' : '#94a3b8'; ctx.stroke();
+        ctx.fillStyle = '#1e293b'; ctx.font = 'bold 10px Plus Jakarta Sans, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(item.id, pt.x, pt.y);
+      }
+      const curPt = getTileCoords(currentStep - 1);
+      ctx.save(); ctx.beginPath(); ctx.arc(curPt.x, curPt.y - 4, 10, 0, Math.PI * 2);
+      ctx.fillStyle = '#047857'; ctx.shadowColor = 'rgba(4, 120, 87, 0.5)'; ctx.shadowBlur = 10; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#ffffff'; ctx.stroke(); ctx.restore();
+    }
+
+    function rollMindfulDice() {
+      if (isMoving) return;
+      isMoving = true; initAudio();
+      const rollBtn = document.getElementById('rollBtn');
+      rollBtn.disabled = true; rollBtn.classList.add('opacity-50');
+      let roll = Math.floor(Math.random() * 4) + 1;
+      if (currentStep + roll > 24) roll = 24 - currentStep;
+      if (roll === 0) roll = 1;
+      const diceEl = document.getElementById('diceDisplay');
+      let animCount = 0;
+      const diceAnim = setInterval(() => {
+        diceEl.innerText = ['🌱', '🌸', '🍃', '🕊️'][animCount % 4];
+        animCount++; playChime(300 + animCount * 60);
+        if (animCount > 6) {
+          clearInterval(diceAnim); diceEl.innerText = roll; advanceSteps(roll);
+        }
+      }, 90);
+    }
+
+    function advanceSteps(stepsRemaining) {
+      if (stepsRemaining <= 0) {
+        isMoving = false;
+        const rollBtn = document.getElementById('rollBtn');
+        rollBtn.disabled = false; rollBtn.classList.remove('opacity-50');
+        triggerSanctuary(currentStep); return;
+      }
+      currentStep++; playChime(400 + currentStep * 15); updateStatusDisplay(); drawBoard();
       setTimeout(() => { advanceSteps(stepsRemaining - 1); }, 260);
     }
 
@@ -301,7 +440,7 @@
       const item = sanctuaries[step - 1];
       if (item.type === 'breath') { openModal('breathModal'); runBreathingCycle(); }
       else if (item.type === 'reflect') { document.getElementById('reflectContent').innerText = item.text; openModal('reflectModal'); }
-      else if (item.type === 'cleanse') openModal('cleanseModal');
+      else if (item.type === 'cleanse') { openModal('cleanseModal'); startCleansePractice(); }
       else if (item.type === 'gratitude') { document.getElementById('gratitudeInput').value = ''; openModal('gratitudeModal'); }
       else if (item.type === 'nature') openModal('natureModal');
       else if (item.type === 'shanti') { openModal('shantiModal'); playSingingBowlTone(528); }
@@ -316,6 +455,138 @@
       document.getElementById('modalBackdrop').classList.add('hidden');
     }
 
+    // --- Interactive 60s Nirmalta Cleaning Engine ---
+    let cleanseInterval = null, cleanseSecRemaining = 60, isCleanseRunning = false;
+    let cleanseParticles = [], cleanseAnimId = null;
+
+    function initCleanseParticles() {
+      cleanseParticles = [];
+      const c = document.getElementById('cleanseCanvas');
+      for (let i = 0; i < 28; i++) {
+        cleanseParticles.push({
+          x: c.width / 2 + (Math.random() * 40 - 20),
+          y: c.height / 2 + (Math.random() * 30 - 15),
+          vx: (Math.random() * -1.8) - 0.4, // float backward
+          vy: (Math.random() - 0.5) * 0.9,
+          size: Math.random() * 7 + 4,
+          alpha: Math.random() * 0.6 + 0.3
+        });
+      }
+    }
+
+    function renderCleanseCanvas(phase) {
+      const c = document.getElementById('cleanseCanvas');
+      if (!c) return;
+      const cctx = c.getContext('2d');
+      cctx.clearRect(0, 0, c.width, c.height);
+
+      if (phase === 1) { // Smoke leaving back
+        cleanseParticles.forEach(p => {
+          cctx.beginPath();
+          cctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          cctx.fillStyle = `rgba(148, 163, 184, ${p.alpha})`;
+          cctx.fill();
+          p.x += p.vx;
+          p.y += p.vy;
+          p.alpha -= 0.003;
+          if (p.x < 10 || p.alpha <= 0) {
+            p.x = c.width / 2 + (Math.random() * 30 - 15);
+            p.y = c.height / 2 + (Math.random() * 20 - 10);
+            p.alpha = Math.random() * 0.5 + 0.3;
+          }
+        });
+      } else if (phase === 2) { // Golden sacred current from front
+        cctx.save();
+        const grad = cctx.createRadialGradient(c.width/2, c.height/2, 5, c.width/2, c.height/2, 65);
+        grad.addColorStop(0, 'rgba(251, 191, 36, 0.45)');
+        grad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+        cctx.fillStyle = grad;
+        cctx.beginPath();
+        cctx.arc(c.width/2, c.height/2, 65, 0, Math.PI*2);
+        cctx.fill();
+        cctx.restore();
+      } else { // Light & Settled
+        cctx.save();
+        const grad = cctx.createRadialGradient(c.width/2, c.height/2, 4, c.width/2, c.height/2, 55);
+        grad.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+        grad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+        cctx.fillStyle = grad;
+        cctx.beginPath();
+        cctx.arc(c.width/2, c.height/2, 55, 0, Math.PI*2);
+        cctx.fill();
+        cctx.restore();
+      }
+      cleanseAnimId = requestAnimationFrame(() => {
+        const currentPhase = cleanseSecRemaining > 25 ? 1 : (cleanseSecRemaining > 10 ? 2 : 3);
+        renderCleanseCanvas(currentPhase);
+      });
+    }
+
+    function startCleansePractice() {
+      cleanseSecRemaining = 60;
+      isCleanseRunning = true;
+      document.getElementById('cleanseActionBtn').innerText = 'Pause Practice';
+      initCleanseParticles();
+      if (cleanseAnimId) cancelAnimationFrame(cleanseAnimId);
+      renderCleanseCanvas(1);
+      playChime(396);
+
+      if (cleanseInterval) clearInterval(cleanseInterval);
+      cleanseInterval = setInterval(() => {
+        if (!isCleanseRunning) return;
+        cleanseSecRemaining--;
+        updateCleanseUI();
+
+        if (cleanseSecRemaining === 25) {
+          playChime(528); // Sacred shift to vacuum
+        } else if (cleanseSecRemaining === 10) {
+          playSingingBowlTone(432); // Stillness
+        }
+
+        if (cleanseSecRemaining <= 0) {
+          clearInterval(cleanseInterval);
+          isCleanseRunning = false;
+          playSingingBowlTone(528);
+          document.getElementById('cleansePhaseBadge').innerText = 'Complete: Heart is Light & Pure';
+          document.getElementById('cleansePhaseLabel').innerText = 'All burdens released. Sacred light filled.';
+          document.getElementById('cleanseActionBtn').innerText = 'Repeat (60s)';
+        }
+      }, 1000);
+    }
+
+    function updateCleanseUI() {
+      document.getElementById('cleanseTimer').innerText = `${cleanseSecRemaining}s`;
+      const pct = ((60 - cleanseSecRemaining) / 60) * 100;
+      document.getElementById('cleanseBar').style.width = `${pct}%`;
+
+      if (cleanseSecRemaining > 25) {
+        document.getElementById('cleansePhaseBadge').innerText = 'Phase 1: Release (Leaving from back as vapor)';
+        document.getElementById('cleansePhaseLabel').innerText = 'Complexities & impressions gently dissolving...';
+      } else if (cleanseSecRemaining > 10) {
+        document.getElementById('cleansePhaseBadge').innerText = 'Phase 2: Sacred Vacuum (Divine Light Entering)';
+        document.getElementById('cleansePhaseLabel').innerText = 'A sacred current of purity flows in from the front...';
+      } else {
+        document.getElementById('cleansePhaseBadge').innerText = 'Phase 3: Stillness & Purity';
+        document.getElementById('cleansePhaseLabel').innerText = 'The heart is clear, calm, and filled with grace.';
+      }
+    }
+
+    function toggleCleanseTimer() {
+      if (cleanseSecRemaining <= 0) {
+        startCleansePractice();
+        return;
+      }
+      isCleanseRunning = !isCleanseRunning;
+      document.getElementById('cleanseActionBtn').innerText = isCleanseRunning ? 'Pause Practice' : 'Resume Practice';
+    }
+
+    function endCleanseModal() {
+      if (cleanseInterval) clearInterval(cleanseInterval);
+      if (cleanseAnimId) cancelAnimationFrame(cleanseAnimId);
+      closeModal('cleanseModal');
+    }
+
+    // --- Breathing Cycle ---
     let breathInterval = null;
     function runBreathingCycle() {
       const orb = document.getElementById('breathOrb'), text = document.getElementById('breathInstruction');
@@ -350,5 +621,3 @@
   </script>
 </body>
 </html>
-
-
